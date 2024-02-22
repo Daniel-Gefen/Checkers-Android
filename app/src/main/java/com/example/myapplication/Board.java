@@ -2,7 +2,6 @@ package com.example.myapplication;
 
 import android.content.Context;
 import android.graphics.Color;
-
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.view.View;
@@ -11,7 +10,6 @@ import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.Toast;
-
 import java.util.LinkedList;
 
 
@@ -40,7 +38,7 @@ public class Board {
         }
         this.pieces = new Piece[BOARD_SIZE][BOARD_SIZE];
 
-//
+
     }
 
 
@@ -229,11 +227,14 @@ public class Board {
                     int jumpRow = newRow + direction[0];
                     int jumpCol = newCol + direction[1];
                     if (isValidPosition(jumpRow, jumpCol)) {
-                        possibleMoves.add(new PiecePosition(jumpRow, jumpCol).getValue());
-                        // Check for multiple jumps
-                        simonrecurse(color, jumpRow, jumpCol, directions);
+                        if (pieces[jumpRow][jumpCol].isEmpty()) {
+                           possibleMoves.add(new PiecePosition(jumpRow, jumpCol).getValue());
+                            // Check for multiple jumps
+                            checkJumps(color, jumpRow, jumpCol, directions);
+
+                        }
                     }
-                    // If there's an opponent piece, check for possible jumps
+
 
 
 
@@ -241,11 +242,11 @@ public class Board {
             }
         }
         return possibleMoves;
-        //       Toast.makeText(, "", Toast.LENGTH_SHORT).show();
+
         // At this point, possibleMoves contains all possible moves for the piece
     }
 
-    public void simonrecurse(Piece.PieceColor color, int jumpRow, int jumpCol, int[][] directions) {
+    public void checkJumps(Piece.PieceColor color, int jumpRow, int jumpCol, int[][] directions) {
 
         for (int[] direction : directions) {
 
@@ -260,7 +261,7 @@ public class Board {
                         if (pieces[newRow][newCol].isEmpty() || pieces[newRow][newCol].getColor() != color) {
                             if (pieces[newRow][newCol].isEmpty()) {
                                 possibleMoves.add(new PiecePosition(newRow, newCol).getValue());
-                                simonrecurse(color, newRow + 2*direction[0], newCol + 2*direction[1], directions);
+
                             } else {
                                 break;
                             }
