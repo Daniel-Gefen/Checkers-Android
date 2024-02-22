@@ -11,6 +11,16 @@ public class PiecePosition {
         this.column = num % 8;      // Modulo operation to get the column
     }
 
+    public PiecePosition(int row,int column){
+        this.row=row;
+        this.column=column;
+
+    }
+
+    public int getValue(){
+        return this.row*8 +this.column;
+    }
+
     // Add getters for rowPosition and column if needed
     public int getRow() {
         return row;

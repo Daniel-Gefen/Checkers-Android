@@ -1,48 +1,47 @@
 package com.example.myapplication;
 
 
-
-import android.app.Application;
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-
-import androidx.lifecycle.viewmodel.CreationExtras;
-
 public class Piece {
 
-
+    PiecePosition position;
     private PieceColor color;
     private int picId ;
     public Piece(PieceColor color){
         this.color=color;
-        if (color==PieceColor.Black)
+        if (color==PieceColor.BLACK)
             this.picId=R.drawable.blackpawn;
-        else if (color==PieceColor.Red)
+        else if (color==PieceColor.RED)
             this.picId=R.drawable.redpawn;
-        else if (color==PieceColor.Empty)
+        else if (color==PieceColor.EMPTY)
             this.picId=0;
 
 
 
     }
 
+
+
+
     public boolean isEmpty(){
-        return color==PieceColor.Empty;
+        return color==PieceColor.EMPTY;
     }
 
     public int getPicId() {
         return picId;
     }
 
-    public enum PieceColor{
-        Black,
-        Red,
-
-        Empty;
+    public PieceColor getColor() {
+        return color;
     }
+
+    public enum PieceColor{
+        BLACK,
+        RED,
+
+        EMPTY
+
+    }
+
 
     @Override
     public String toString() {
@@ -50,4 +49,8 @@ public class Piece {
                 "color=" + color +
                 '}';
     }
+
+
+
+
 }
