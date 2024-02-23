@@ -101,7 +101,7 @@ public class Board {
                         return;
                     }
                     image.setBackgroundColor(Color.rgb(0, 250, 0));
-                    possibleMoves = checkAllPossibleMoves(pieces[i][j], i, j);
+                     checkAllPossibleMoves(pieces[i][j], i, j);
                     highlightPossibleMoves();
                     firstClick = false;
 
@@ -195,10 +195,9 @@ public class Board {
         }
     }
 
-    private LinkedList<Integer> checkAllPossibleMoves(Piece piece, int i, int j) {
+    private void checkAllPossibleMoves(Piece piece, int row, int column) {
         Piece.PieceColor color = piece.getColor();
-        int row = i;
-        int col = j;
+
         possibleMoves = new LinkedList<Integer>();
 
         // Define the directions based on the color of the piece
@@ -210,7 +209,7 @@ public class Board {
         // Check all possible directions
         for (int[] direction : directions) {
             int newRow = row + direction[0];
-            int newCol = col + direction[1];
+            int newCol = column + direction[1];
 
             // Check if the new position is within the bounds of the board
             if (isValidPosition(newRow, newCol)) {
@@ -231,9 +230,8 @@ public class Board {
                             possibleMoves.add(new PiecePosition(jumpRow, jumpCol).getValue());
                             tiles[jumpRow][jumpCol].setBackgroundColor(Color.rgb(0, 0, 255));
                             // Check for multiple jumps
-                            for (int[] dir : directions) {
-                                checkForJumps(piece, jumpRow, jumpCol);
-                            }
+                            checkForJumps(piece, jumpRow, jumpCol);
+
                         }
                     }
 
@@ -241,30 +239,41 @@ public class Board {
                 }
             }
         }
-        return possibleMoves;
+
 
         // At this point, possibleMoves contains all possible moves for the piece
     }
 
-    public void checkForJumps(Piece piece, int rowPos, int colPos) {
-        Piece.PieceColor color = piece.getColor();
+    private void checkForJumps(Piece selectedPiece, int rowPos, int colPos) {
+        Piece.PieceColor color = selectedPiece.getColor();
+
+        // Define the directions based on the color of the piece
         int forward = (color == Piece.PieceColor.RED) ? -1 : 1;
+
+        // Define the possible diagonal directions
         int[][] directions = {{forward, 1}, {forward, -1}};
 
-
-        if (!isValidPosition(rowPos, colPos) || !pieces[rowPos][colPos].isEmpty() || pieces[rowPos][colPos].getColor()==color)
+        // check if piece is in a valid position
+        if (!isValidPosition(rowPos, colPos) )
             return;
 
 
-        Piece test = pieces[rowPos][colPos];
-        if (test.getColor() != color && test.isEmpty()) {
+        Piece currentPiece = pieces[rowPos][colPos];
+        if (currentPiece.getColor() != color && currentPiece.isEmpty()) {
             for (int[] dir : directions) {
 
-                if (isValidPosition(rowPos + dir[0], colPos + dir[1]) && !pieces[rowPos + dir[0]][colPos + dir[1]].isEmpty()&& pieces[rowPos + dir[0]][colPos + dir[1]].getColor()!=color) {
-                    if (isValidPosition(rowPos + dir[0]*2, colPos + dir[1]*2) && pieces[rowPos + dir[0]*2][colPos + dir[1]*2].isEmpty())
-                        possibleMoves.add(new PiecePosition(rowPos + dir[0]*2, colPos + dir[1]*2).getValue());
+                int jumpFirstRow=rowPos + dir[0];
+                int jumpFirstColumn=colPos + dir[1];
+                int jumpSecondRow = jumpFirstRow+dir[0];
+                int jumpSecondColumn = jumpFirstColumn+dir[1];
 
-                    checkForJumps(piece, rowPos + dir[0]*2 ,colPos + dir[1]*2);
+                //checks if the piece that you can eat is the opposite color, the tile is not empty and its in a valid position
+                if (isValidPosition(jumpFirstRow,jumpFirstColumn ) && !pieces[jumpFirstRow][jumpFirstColumn].isEmpty()&& pieces[jumpFirstRow][jumpFirstColumn].getColor()!=color) {
+                    //checks if there is not a piece blocking
+                    if (isValidPosition(jumpSecondRow, jumpSecondColumn) && pieces[jumpSecondRow][jumpSecondColumn].isEmpty())
+                        possibleMoves.add(new PiecePosition(jumpSecondRow, jumpSecondColumn).getValue());
+
+                    checkForJumps(selectedPiece, jumpSecondRow ,jumpSecondColumn);
 
                 }
             }
