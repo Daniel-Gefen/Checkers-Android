@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
-import android.widget.Toast;
+
 import java.util.LinkedList;
 
 
@@ -228,14 +228,14 @@ public class Board {
                     int jumpCol = newCol + direction[1];
                     if (isValidPosition(jumpRow, jumpCol)) {
                         if (pieces[jumpRow][jumpCol].isEmpty()) {
-                           possibleMoves.add(new PiecePosition(jumpRow, jumpCol).getValue());
+                            possibleMoves.add(new PiecePosition(jumpRow, jumpCol).getValue());
+                            tiles[jumpRow][jumpCol].setBackgroundColor(Color.rgb(0, 0, 255));
                             // Check for multiple jumps
-                            checkJumps(color, jumpRow, jumpCol, directions);
-
+                            for (int[] dir : directions) {
+                                checkForJumps(piece, jumpRow, jumpCol);
+                            }
                         }
                     }
-
-
 
 
                 }
@@ -246,35 +246,35 @@ public class Board {
         // At this point, possibleMoves contains all possible moves for the piece
     }
 
-    public void checkJumps(Piece.PieceColor color, int jumpRow, int jumpCol, int[][] directions) {
+    public void checkForJumps(Piece piece, int rowPos, int colPos) {
+        Piece.PieceColor color = piece.getColor();
+        int forward = (color == Piece.PieceColor.RED) ? -1 : 1;
+        int[][] directions = {{forward, 1}, {forward, -1}};
 
-        for (int[] direction : directions) {
 
-            int newRow = jumpRow + direction[0];
-            int newCol = jumpCol + direction[1];
+        if (!isValidPosition(rowPos, colPos) || !pieces[rowPos][colPos].isEmpty() || pieces[rowPos][colPos].getColor()==color)
+            return;
 
-            while (isValidPosition(newRow, newCol) && pieces[newRow][newCol].getColor() != color) {
-                for (int[] dir : directions) {
-                    newRow += direction[0];
-                    newCol += direction[1];
-                    if (isValidPosition(newRow, newCol)) {
-                        if (pieces[newRow][newCol].isEmpty() || pieces[newRow][newCol].getColor() != color) {
-                            if (pieces[newRow][newCol].isEmpty()) {
-                                possibleMoves.add(new PiecePosition(newRow, newCol).getValue());
 
-                            } else {
-                                break;
-                            }
-                        }
-                    }else {
-                        break;
-                    }
+        Piece test = pieces[rowPos][colPos];
+        if (test.getColor() != color && test.isEmpty()) {
+            for (int[] dir : directions) {
+
+                if (isValidPosition(rowPos + dir[0], colPos + dir[1]) && !pieces[rowPos + dir[0]][colPos + dir[1]].isEmpty()&& pieces[rowPos + dir[0]][colPos + dir[1]].getColor()!=color) {
+                    if (isValidPosition(rowPos + dir[0]*2, colPos + dir[1]*2) && pieces[rowPos + dir[0]*2][colPos + dir[1]*2].isEmpty())
+                        possibleMoves.add(new PiecePosition(rowPos + dir[0]*2, colPos + dir[1]*2).getValue());
+
+                    checkForJumps(piece, rowPos + dir[0]*2 ,colPos + dir[1]*2);
 
                 }
             }
+
         }
 
+
     }
+
+
 
     // Helper method to check if a position is within the bounds of the board
     private boolean isValidPosition(int row, int col) {
