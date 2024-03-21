@@ -10,17 +10,21 @@ import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 
 public class Board {
     private ImageView[][] tiles;
 
+
     private Piece[][] pieces;
 
     private LinkedList<Integer> possibleMoves;
     private Piece.PieceColor currentPlayerTurn;
     private PiecePosition firstPiecePosition;
+
+    private PiecePosition secondPiecePosition;
     private boolean firstClick;
     private static final int BOARD_SIZE = 8;
     private static final int TILE_HEIGHT = 135;
@@ -77,7 +81,7 @@ public class Board {
         public void onClick(View v) {
             Handler handler = new Handler();
 
-            PiecePosition secondPiecePosition;
+            //           PiecePosition secondPiecePosition;
             if (v instanceof ImageView) {
 
                 if (firstClick) {
@@ -101,7 +105,19 @@ public class Board {
                         return;
                     }
                     image.setBackgroundColor(Color.rgb(0, 250, 0));
-                     checkAllPossibleMoves(pieces[i][j], i, j);
+                    checkAllPossibleMove(pieces[i][j], i, j);
+                    if (possibleMoves.isEmpty()){
+                        image.setBackgroundColor(Color.rgb(242, 31, 31));
+                        handler.removeCallbacksAndMessages(image);
+
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                image.setBackgroundColor(backGroundColor);
+                            }
+                        }, 200);
+                        return;
+                    }
                     highlightPossibleMoves();
                     firstClick = false;
 
@@ -140,9 +156,13 @@ public class Board {
                         ImageView image = tiles[i][j];
                         image.setBackgroundColor((i + j) % 2 == 0 ? Color.WHITE : Color.BLACK);
 
-
-                        movePiece(firstPiecePosition, secondPiecePosition);
+                        //simonremovepiecefromboard();
                         firstClick = true;
+                        movePiece(firstPiecePosition, secondPiecePosition);
+
+
+
+
 
                     }
                 }
@@ -151,11 +171,56 @@ public class Board {
     };
 
     private void movePiece(PiecePosition first, PiecePosition second) {
+
+
+        if (Math.abs(first.getRow() - second.getRow()) > 1) {
+            removeCapturedPawns(first, second);
+
+            // Check for further capturing moves
+            checkForFurtherCaptures(second);
+
+
+        }
+
         Piece piece = pieces[first.getRow()][first.getColumn()];
         pieces[first.getRow()][first.getColumn()] = new Piece(Piece.PieceColor.EMPTY);
         pieces[second.getRow()][second.getColumn()] = piece;
-        currentPlayerTurn = (currentPlayerTurn == Piece.PieceColor.BLACK) ? Piece.PieceColor.RED : Piece.PieceColor.BLACK;
+        if (second.getRow()==7&&piece.getColor()== Piece.PieceColor.BLACK){
+            piece.setType(Piece.PieceType.KING);
+        }
+        else if(second.getRow()==0&piece.getColor()== Piece.PieceColor.RED){
+            piece.setType(Piece.PieceType.KING);
+        }
+
+        // Check if it's a capturing move
+
+        if (possibleMoves.isEmpty()) {
+            currentPlayerTurn = (currentPlayerTurn == Piece.PieceColor.BLACK) ? Piece.PieceColor.RED : Piece.PieceColor.BLACK;
+
+        }
+        else {
+
+
+            firstPiecePosition = second;
+            firstClick = false;
+            int i = firstPiecePosition.getRow();
+            int j = firstPiecePosition.getColumn();
+            ImageView image = tiles[i][j];
+            image.setBackgroundColor(Color.rgb(0,255,0));
+        }
+
         loadBoard();
+    }
+
+
+
+    private void checkForFurtherCaptures(PiecePosition position) {
+        deHighlightPossibleMoves();
+        int row = position.getRow();
+        int col = position.getColumn();
+        Piece piece = pieces[firstPiecePosition.getRow()][firstPiecePosition.getColumn()];
+        checkForJumps(piece, row, col); // Recursively check for further capturing moves
+        highlightPossibleMoves();
 
     }
 
@@ -195,18 +260,22 @@ public class Board {
         }
     }
 
-    private void checkAllPossibleMoves(Piece piece, int row, int column) {
+    private void checkAllPossibleMove(Piece piece, int row, int column) {
+        int[][] directions;
         Piece.PieceColor color = piece.getColor();
 
         possibleMoves = new LinkedList<Integer>();
 
         // Define the directions based on the color of the piece
-        int forward = (color == Piece.PieceColor.RED) ? -1 : 1;
-
-        // Define the possible diagonal directions
-        int[][] directions = {{forward, 1}, {forward, -1}};
-
+        if (piece.getType() == Piece.PieceType.PAWN) {
+            int forward = (color == Piece.PieceColor.RED) ? -1 : 1;
+            // Define the possible diagonal directions
+            directions = new int[][]{{forward, 1}, {forward, -1}};
+        } else {
+            directions = new int[][]{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+        }
         // Check all possible directions
+
         for (int[] direction : directions) {
             int newRow = row + direction[0];
             int newCol = column + direction[1];
@@ -228,9 +297,9 @@ public class Board {
                     if (isValidPosition(jumpRow, jumpCol)) {
                         if (pieces[jumpRow][jumpCol].isEmpty()) {
                             possibleMoves.add(new PiecePosition(jumpRow, jumpCol).getValue());
-                            tiles[jumpRow][jumpCol].setBackgroundColor(Color.rgb(0, 0, 255));
+
                             // Check for multiple jumps
-                            checkForJumps(piece, jumpRow, jumpCol);
+
 
                         }
                     }
@@ -239,19 +308,37 @@ public class Board {
                 }
             }
         }
-
-
         // At this point, possibleMoves contains all possible moves for the piece
+        if (!possibleMoves.isEmpty()) {
+            int maxDistance = findMaxInList(row);
+            if (maxDistance > 1) {
+                Iterator<Integer> iterator = possibleMoves.iterator();
+                while (iterator.hasNext()) {
+                    int pos = iterator.next();
+                    int distance = Math.abs(row - pos / 8);
+                    if (distance <= 1) {
+                        iterator.remove();
+                    }
+                }
+            }
+        }
+
     }
+
+
+
 
     private void checkForJumps(Piece selectedPiece, int rowPos, int colPos) {
         Piece.PieceColor color = selectedPiece.getColor();
-
+        int[][] directions;
         // Define the directions based on the color of the piece
-        int forward = (color == Piece.PieceColor.RED) ? -1 : 1;
-
-        // Define the possible diagonal directions
-        int[][] directions = {{forward, 1}, {forward, -1}};
+        if (selectedPiece.getType() == Piece.PieceType.PAWN) {
+            int forward = (color == Piece.PieceColor.RED) ? -1 : 1;
+            // Define the possible diagonal directions
+            directions = new int[][]{{forward, 1}, {forward, -1}};
+        } else {
+            directions = new int[][]{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+        }
 
         // check if piece is in a valid position
         if (!isValidPosition(rowPos, colPos) )
@@ -259,6 +346,7 @@ public class Board {
 
 
         Piece currentPiece = pieces[rowPos][colPos];
+
         if (currentPiece.getColor() != color && currentPiece.isEmpty()) {
             for (int[] dir : directions) {
 
@@ -273,16 +361,47 @@ public class Board {
                     if (isValidPosition(jumpSecondRow, jumpSecondColumn) && pieces[jumpSecondRow][jumpSecondColumn].isEmpty())
                         possibleMoves.add(new PiecePosition(jumpSecondRow, jumpSecondColumn).getValue());
 
-                    checkForJumps(selectedPiece, jumpSecondRow ,jumpSecondColumn);
+                    //  checkForJumps(selectedPiece, jumpSecondRow ,jumpSecondColumn);
 
                 }
             }
 
         }
+//        if (!possibleMoves.isEmpty()) {
+//            int maxDistance = findMaxInList(rowPos);
+//            if (maxDistance>1) {
+//                Iterator<Integer> iterator = possibleMoves.iterator();
+//                while (iterator.hasNext()) {
+//                    int pos = iterator.next();
+//                    int distance = Math.abs(rowPos - pos / 8);
+//                    if (distance <=1) {
+//                        iterator.remove();
+//                    }
+//                }
+//            }
+//        }
 
+    }
+    private void removeCapturedPawns(PiecePosition firstPos, PiecePosition secondPos){
+        int row = Math.abs((firstPos.getRow()+secondPos.getRow())/2);
+        int column = Math.abs((firstPos.getColumn()+secondPos.getColumn())/2);
+        pieces[row][column]=new Piece(Piece.PieceColor.EMPTY);
 
     }
 
+
+
+    private int findMaxInList(int row){
+        int max =0;
+        for (int pos:possibleMoves) {
+            int distance=Math.abs(row-pos/8);
+            if (distance>max){
+                max=distance;
+            }
+
+        }
+        return max;
+    }
 
 
     // Helper method to check if a position is within the bounds of the board

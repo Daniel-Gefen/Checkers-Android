@@ -3,24 +3,40 @@ package com.example.myapplication;
 
 public class Piece {
 
-    PiecePosition position;
+
     private PieceColor color;
+    private PieceType type;
     private int picId ;
     public Piece(PieceColor color){
         this.color=color;
-        if (color==PieceColor.BLACK)
-            this.picId=R.drawable.blackpawn;
-        else if (color==PieceColor.RED)
-            this.picId=R.drawable.redpawn;
-        else if (color==PieceColor.EMPTY)
-            this.picId=0;
+        this.type=PieceType.PAWN;
+
+        if (color == PieceColor.BLACK)
+            this.picId = R.drawable.blackpawn;
+        else if (color == PieceColor.RED)
+            this.picId = R.drawable.redpawn;
+        else if (color == PieceColor.EMPTY)
+            this.picId = 0;
+
 
 
 
     }
 
+    public PieceType getType() {
+        return type;
 
+    }
 
+    public void setType(PieceType type) {
+        this.type = type;
+        if (type==PieceType.KING) {
+            if (color == PieceColor.BLACK)
+                this.picId = R.drawable.blackking;
+            else if (color == PieceColor.RED)
+                this.picId = R.drawable.redking;
+        }
+    }
 
     public boolean isEmpty(){
         return color==PieceColor.EMPTY;
@@ -34,13 +50,9 @@ public class Piece {
         return color;
     }
 
-    public enum PieceColor{
-        BLACK,
-        RED,
 
-        EMPTY
 
-    }
+
 
 
     @Override
@@ -50,7 +62,17 @@ public class Piece {
                 '}';
     }
 
+    public enum PieceColor{
+        BLACK,
+        RED,
 
+        EMPTY;
+
+    }
+    public enum PieceType{
+        PAWN,
+        KING
+    }
 
 
 }
